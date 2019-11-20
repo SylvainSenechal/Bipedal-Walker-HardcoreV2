@@ -12,7 +12,7 @@ import gym
 import numpy as np
 import sys
 
-env = gym.make('BipedalWalker-v2')
+env = gym.make('LunarLanderContinuous-v2')
 np.random.seed(10)
 
 hiddenLayerSize = 100
@@ -27,9 +27,9 @@ reload = False
 
 
 model = {}
-model['W1'] = np.random.randn(14, hiddenLayerSize) / np.sqrt(14)
-model['W2'] = np.random.randn(hiddenLayerSize, 4) / np.sqrt(hiddenLayerSize)
-size = 14*hiddenLayerSize + hiddenLayerSize * 4
+model['W1'] = np.random.randn(8, hiddenLayerSize) / np.sqrt(8)
+model['W2'] = np.random.randn(hiddenLayerSize, 2) / np.sqrt(hiddenLayerSize)
+size = 8*hiddenLayerSize + hiddenLayerSize * 2
 
 
 def get_action(state, model):
@@ -47,30 +47,37 @@ def get_action(state, model):
 
 def evaluateNeuralNetwork(neuralNetowrk, render=False):
     nn = {}
-    nn['W1'] = neuralNetowrk[:14*hiddenLayerSize].reshape(14, hiddenLayerSize)
-    nn['W2'] = neuralNetowrk[-hiddenLayerSize*4:].reshape(hiddenLayerSize, 4)
+    nn['W1'] = neuralNetowrk[:8*hiddenLayerSize].reshape(8, hiddenLayerSize)
+    nn['W2'] = neuralNetowrk[-hiddenLayerSize*2:].reshape(hiddenLayerSize, 2)
 
     state = env.reset()
-    state = state[:14]
     total_reward = 0
     for t in range(iter_num):
         if render: env.render()
 
         action = get_action(state, nn)
         state, reward, done, info = env.step(action)
-        state = state[:14]
         total_reward += reward
 
         if done:
             break
     return -total_reward
 
-es = cma.CMAEvolutionStrategy(size * [0], 0.5, {'popsize': 25})
-for i in range(50):
-    noisySolutions = es.ask()
-    es.tell(noisySolutions, [evaluateNeuralNetwork(solution) for solution in noisySolutions])
-    es.logger.add()
-    es.disp()
+from cma.fitness_transformations import EvalParallel
+
+es = cma.CMAEvolutionStrategy(size * [0], 0.5, {'popsize': 40, 'maxiter': 60})
+# for i in range(50):
+#     noisySolutions = es.ask()
+#     es.tell(noisySolutions, [evaluateNeuralNetwork(solution) for solution in noisySolutions])
+#     es.logger.add()
+#     es.disp()
+
+with EvalParallel(12) as eval_all:
+    while not es.stop():
+        X = es.ask()
+        es.tell(X, eval_all(evaluateNeuralNetwork, X))
+        es.disp()
+
 # help(cma.CMAEvolutionStrategy)
 # es.optimize(evaluateNeuralNetwork)
 res = es.result
