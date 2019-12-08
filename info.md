@@ -1,5 +1,3 @@
-from multiprocessing import Process
-
 # python -m cProfile -s time testES.py
 
 # installation : pip install 'gym[all]'
@@ -18,6 +16,8 @@ https://openai.com/blog/evolution-strategies/
 # algo génétique +/- double
 # - travail a ameliorer les jouers
 # - travail a ameliorer les environnements
+# dans le papier de recheche le nnet : 24 => 40 => 40 => 4 tanh
+# 512 pop
 
 """
 IMPORTANT PARAMETERS :
@@ -42,29 +42,3 @@ stair_steps = self.np_random.randint(3, 5)
 
 
 """
-
-
-
-
-# import gym
-# env = gym.make('BipedalWalkerHardcore-v2')
-# for i_episode in range(1):
-#     observation = env.reset()
-#     for t in range(1000):
-#         env.render()
-#         # print(observation)
-#         action = env.action_space.sample()
-#         print(action)
-#         observation, reward, done, info = env.step(action)
-#         if done:
-#             print("Episode finished after {} timesteps".format(t+1))
-#             break
-# env.close()
-
-
-# import gym
-# from agent import Agent
-#
-# environment = gym.make('BipedalWalker-v2')
-# a = Agent(environment)
-# print(a.environment)

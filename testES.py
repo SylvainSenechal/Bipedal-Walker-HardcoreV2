@@ -1,108 +1,121 @@
-# Evolution Strategies BipedalWalker-v2
-# https://blog.openai.com/evolution-strategies/
-# gives good solution at around iter 100 in 5 minutes
-# for testing model set reload=True
-
-# dans le papier : 24 => 40 => 40 => 4 tanh
-# 512 pop
-
-
-import cma
+import cma # https://github.com/CMA-ES/pycma
 import gym
 import numpy as np
-import sys
+import multiprocessing
+from cma.fitness_transformations import EvalParallel
 
-env = gym.make('BipedalWalker-v2')
-np.random.seed(10)
+from environment import BipedalWalker
+# env = gym.make('BipedalWalker-v2')
+# env = gym.make('BipedalWalkerHardcore-v2')
+# np.random.seed(10)
 
-hiddenLayerSize = 100
-sizePopulation = 20
-sigma = 0.1
-alpha = 0.03
-iter_num = 300
-aver_reward = None
-allow_writing = True
-reload = False
+###
+# counter : ecart en obstacles
+# velocity : 0 => terrain plat, infini => montagnes
+# STUMP : rectangle verticaux
+#
 
+POPULATION_SIZE = 25
+SIGMA_INIT = 0.3
+MAX_ITERATION_CMAES = 100
+ITERATIONS_STEPS_LEARNING = 300
+ITERATIONS_STEPS_TESTING = 1600
+CPU_COUNT = multiprocessing.cpu_count()
+NB_ENV_BENCHMARK = 1
+HARDCORE = False
+
+INPUT_SIZE = 24
+OUTPUT_SIZE = 4
+HIDDEN_LAYER_SIZE = 40
 
 
 model = {}
-model['W1'] = np.random.randn(14, hiddenLayerSize) / np.sqrt(14)
-model['W2'] = np.random.randn(hiddenLayerSize, 4) / np.sqrt(hiddenLayerSize)
-size = 14*hiddenLayerSize + hiddenLayerSize * 4
+model['W1'] = np.random.randn(INPUT_SIZE, HIDDEN_LAYER_SIZE) / np.sqrt(INPUT_SIZE)
+model['W2'] = np.random.randn(HIDDEN_LAYER_SIZE, OUTPUT_SIZE) / np.sqrt(HIDDEN_LAYER_SIZE)
+# model['B1'] = np.random.randn(HIDDEN_LAYER_SIZE) / np.sqrt(HIDDEN_LAYER_SIZE)
+# model['B2'] = np.random.randn(OUTPUT_SIZE) / np.sqrt(OUTPUT_SIZE)
+SIZE_BRAIN = INPUT_SIZE*HIDDEN_LAYER_SIZE + HIDDEN_LAYER_SIZE * OUTPUT_SIZE # + HIDDEN_LAYER_SIZE + OUTPUT_SIZE
 
-
-def get_action(state, model):
-    hl = np.matmul(state, model['W1'])
+def actionFromBrain(state, brain):
+    hl = np.matmul(state, brain['W1'])
+    # hl = np.add(hl, brain['B1'])
     hl = np.tanh(hl)
-    action = np.matmul(hl, model['W2'])
+    action = np.matmul(hl, brain['W2'])
+    # action = np.add(action, brain['B2'])
     action = np.tanh(action)
-
-    # hl = np.matmul(state, model['W1'])
-    # hl[hl<0] = 0 # np.tanh(hl)
-    # action = np.matmul(hl, model['W2'])
-    # action[action<0] = 0 #np.tanh(action)
 
     return action
 
-def evaluateNeuralNetwork(neuralNetowrk, render=False):
+def evaluateNeuralNetwork(neuralNetowrk, iterationsSteps=ITERATIONS_STEPS_LEARNING, render=False):
     nn = {}
-    nn['W1'] = neuralNetowrk[:14*hiddenLayerSize].reshape(14, hiddenLayerSize)
-    nn['W2'] = neuralNetowrk[-hiddenLayerSize*4:].reshape(hiddenLayerSize, 4)
+    # nn['W1'] = neuralNetowrk[:INPUT_SIZE*HIDDEN_LAYER_SIZE].reshape(INPUT_SIZE, HIDDEN_LAYER_SIZE)
+    # nn['W2'] = neuralNetowrk[-HIDDEN_LAYER_SIZE*OUTPUT_SIZE:].reshape(HIDDEN_LAYER_SIZE, OUTPUT_SIZE)
+    nn['W1'] = neuralNetowrk[
+                            0 :
+                            INPUT_SIZE * HIDDEN_LAYER_SIZE
+                            ].reshape(INPUT_SIZE, HIDDEN_LAYER_SIZE)
+    nn['W2'] = neuralNetowrk[
+                            INPUT_SIZE * HIDDEN_LAYER_SIZE :
+                            INPUT_SIZE * HIDDEN_LAYER_SIZE + HIDDEN_LAYER_SIZE * OUTPUT_SIZE
+                            ].reshape(HIDDEN_LAYER_SIZE, OUTPUT_SIZE)
+    # nn['B1'] = neuralNetowrk[
+    #                         INPUT_SIZE * HIDDEN_LAYER_SIZE + HIDDEN_LAYER_SIZE * OUTPUT_SIZE :
+    #                         INPUT_SIZE * HIDDEN_LAYER_SIZE + HIDDEN_LAYER_SIZE * OUTPUT_SIZE + HIDDEN_LAYER_SIZE]
+    # nn['B2'] = neuralNetowrk[
+    #                         INPUT_SIZE * HIDDEN_LAYER_SIZE + HIDDEN_LAYER_SIZE * OUTPUT_SIZE + HIDDEN_LAYER_SIZE :
+    #                         INPUT_SIZE * HIDDEN_LAYER_SIZE + HIDDEN_LAYER_SIZE * OUTPUT_SIZE + HIDDEN_LAYER_SIZE + OUTPUT_SIZE]
 
-    state = env.reset()
-    state = state[:14]
+    # env = gym.make('BipedalWalker-v2')
+    env = BipedalWalker(0, 0.1, 0)
+    # env.seed()
     total_reward = 0
-    for t in range(iter_num):
-        if render: env.render()
+    for i in range(NB_ENV_BENCHMARK):
 
-        action = get_action(state, nn)
-        state, reward, done, info = env.step(action)
-        state = state[:14]
-        total_reward += reward
+        state = env.reset()
+        for t in range(iterationsSteps):
+            if render: env.render()
 
-        if done:
-            break
-    return -total_reward
-
-es = cma.CMAEvolutionStrategy(size * [0], 0.5, {'popsize': 25})
-for i in range(50):
-    noisySolutions = es.ask()
-    es.tell(noisySolutions, [evaluateNeuralNetwork(solution) for solution in noisySolutions])
-    es.logger.add()
-    es.disp()
-# help(cma.CMAEvolutionStrategy)
-# es.optimize(evaluateNeuralNetwork)
-res = es.result
-print('REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEESULT')
-print(res.xbest)
-print(len(res.xbest))
-print('PRETTTTYYYYYYYYYYYYYYy')
-es.result_pretty()
-model = res.xbest
-
-# for i in range(100):
-#     N = {}
-#     for k, v in model.items():
-#         N[k] = np.random.randn(sizePopulation, v.shape[0], v.shape[1])
-#     R = np.zeros(sizePopulation)
-#
-#     for j in range(sizePopulation):
-#         model_try = {}
-#         for k, v in model.items():
-#             model_try[k] = v + sigma*N[k][j]
-#         R[j] = evaluateNeuralNetwork(model_try)
-#
-#     A = (R - np.mean(R)) / np.std(R)
-#     for k in model:
-#         model[k] = model[k] + alpha/(sizePopulation*sigma) * np.dot(N[k].transpose(1, 2, 0), A)
-#
-#     cur_reward = evaluateNeuralNetwork(model)
-#     aver_reward = aver_reward * 0.9 + cur_reward * 0.1 if aver_reward != None else cur_reward
-#     print('iter %d, cur_reward %.2f, aver_reward %.2f' % (i, cur_reward, aver_reward))
+            action = actionFromBrain(state, nn)
+            state, reward, done, info = env.step(action)
+            total_reward += reward
+            if done:
+                break
+    return - total_reward # CMA_ES is minimizing so we minimize (- reward)
 
 
-iter_num = 1600
-for i_episode in range(5):
-    print(evaluateNeuralNetwork(model, True))
-sys.exit('demo finished')
+def main():
+    es = cma.CMAEvolutionStrategy(
+        SIZE_BRAIN * [0],
+        SIGMA_INIT,
+        {
+            'popsize': POPULATION_SIZE,
+            'maxiter': MAX_ITERATION_CMAES
+        }
+    )
+
+
+    with EvalParallel(CPU_COUNT) as eval_all:
+        while not es.stop():
+            noisySolutions = es.ask()
+            es.tell(noisySolutions, eval_all(evaluateNeuralNetwork, noisySolutions))
+            # es.logger.add()
+            es.disp()
+    # help(cma.CMAEvolutionStrategy)
+    res = es.result
+    print('REEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEESULT')
+    print(res.xbest)
+    print(res.xfavorite)
+    print(len(res.xbest))
+    print('PRETTTTYYYYYYYYYYYYYYy')
+    es.result_pretty()
+    # model = res.xbest
+    model = res.xfavorite
+
+    iter_num = 1600
+    for i_episode in range(20):
+        print(-evaluateNeuralNetwork(model, ITERATIONS_STEPS_TESTING, False))
+    for i_episode in range(5):
+        print(-evaluateNeuralNetwork(model, ITERATIONS_STEPS_TESTING, True))
+
+if __name__== "__main__":
+    main()
