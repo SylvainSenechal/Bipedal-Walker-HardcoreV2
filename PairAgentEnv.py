@@ -9,7 +9,7 @@ POPULATION_SIZE = 25
 SIGMA_INIT = 0.3 # Otimum weigths shoudl be within +/- 3*SIGMA
 MAX_ITERATION_CMAES = 100
 ITERATIONS_STEPS_LEARNING = 300
-ITERATIONS_STEPS_TESTING = 1600
+ITERATIONS_STEPS_TESTING = 2000
 CPU_COUNT = multiprocessing.cpu_count()
 NB_ENV_BENCHMARK = 1 # How many environnement simulation are run to mesure the quality of an agent ?
 

@@ -443,15 +443,15 @@ class BipedalWalker(gym.Env, EzPickle):
         self.scroll = pos.x - VIEWPORT_W/SCALE/5
 
         shaping  = 130*pos[0]/SCALE   # moving forward is a way to receive reward (normalized to get 300 on completion)
-        shaping -= 5.0*abs(state[0])  # keep head straight, other than that and falling, any behavior is unpunished
+        # shaping -= 5.0*abs(state[0])  # keep head straight, other than that and falling, any behavior is unpunished
 
         reward = 0
         if self.prev_shaping is not None:
             reward = shaping - self.prev_shaping
         self.prev_shaping = shaping
 
-        for a in action:
-            reward -= 0.00035 * MOTORS_TORQUE * np.clip(np.abs(a), 0, 1)
+        # for a in action:
+            # reward -= 0.00035 * MOTORS_TORQUE * np.clip(np.abs(a), 0, 1)
             # normalized to about -50.0 using heuristic, more optimal agent should spend less
 
         done = False
