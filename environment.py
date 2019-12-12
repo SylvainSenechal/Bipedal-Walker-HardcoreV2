@@ -164,6 +164,7 @@ class BipedalWalker(gym.Env, EzPickle):
 
     def _generate_terrain(self):
         hardcore = True
+        widthPIT = self.pit
         difficultyPIT = (self.pit + 0.001) * 4 # ]0, 4]
         difficultySTUMP = (self.stump + 0.001) # ]0, 1]
         difficultyHEIGHT =  self.height # [0, 1]
@@ -187,7 +188,14 @@ class BipedalWalker(gym.Env, EzPickle):
                 y += velocity * difficultyHEIGHT
 
             elif state==PIT and oneshot:
-                counter = self.np_random.randint(3, 5)
+                # counter = self.np_random.randint(3, 5)
+                if (widthPIT < 0.33):
+                    counter = 2
+                elif (widthPIT < 0.66):
+                    counter = 3
+                else:
+                    counter = 4
+
                 poly = [
                     (x,              y),
                     (x+TERRAIN_STEP, y),
