@@ -78,6 +78,18 @@ class PairAgentEnv:
         # es.result_pretty()
         self.brain = res.xfavorite
 
+    def saveBrain(self, filename):
+        with open("savedAgent/" + filename, "w+") as file:
+            for weight in self.brain:
+                file.write(str(weight) + "\n")
+
+    def loadBrain(self, filename):
+        brain = []
+        with open("savedAgent/" + filename, "r") as file:
+            for weight in file:
+                brain.append(float(weight.strip()))
+        self.brain = np.array(brain)
+
     def benchmark(self):
         for i_episode in range(20):
             print(-evaluateBrain(self.brain, self.difficultyPIT, self.difficultySTUMP, self.difficultyHEIGHT, ITERATIONS_STEPS_TESTING, False))

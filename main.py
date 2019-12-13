@@ -23,7 +23,11 @@ def environnementDifficulty(difficultyPIT, difficultySTUMP, difficultyHEIGHT): #
 def main():
     pair = PairAgentEnv(difficultyPIT = 0, difficultySTUMP = 0, difficultyHEIGHT = 1)
     pair.optimize()
-    pair.benchmark()
+    # pair.benchmark()
+    pair.saveBrain("brain1.txt")
+    pair2 = PairAgentEnv(difficultyPIT = 0, difficultySTUMP = 0, difficultyHEIGHT = 1)
+    pair2.loadBrain("brain1.txt")
+    pair2.benchmark()
 
 if __name__== "__main__":
     main()
