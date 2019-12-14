@@ -90,11 +90,19 @@ class PairAgentEnv:
                 brain.append(float(weight.strip()))
         self.brain = np.array(brain)
 
-    def benchmark(self):
+    def benchmark(self): # This is used for displaying the agent capacity
         for i_episode in range(20):
             print(-evaluateBrain(self.brain, self.difficultyPIT, self.difficultySTUMP, self.difficultyHEIGHT, ITERATIONS_STEPS_TESTING, False))
         for i_episode in range(5):
             print(-evaluateBrain(self.brain, self.difficultyPIT, self.difficultySTUMP, self.difficultyHEIGHT, ITERATIONS_STEPS_TESTING, True))
+    def benchmarkAverage(self, nbSimulationBenchmark = 10): # This one is for computing the average quality of an agent and plotting it latter
+        scores = []
+        for i in range(nbSimulationBenchmark):
+            scores.append(-evaluateBrain(self.brain, self.difficultyPIT, self.difficultySTUMP, self.difficultyHEIGHT, ITERATIONS_STEPS_TESTING, False))
+        averageScore = (sum(scores) - max(scores) - min(scores)) / (nbSimulationBenchmark - 2) # Mean value excluding the best and the worst score
+        return averageScore
+        # print("Average Score : ", averageScore)
+
 #######################################################################################################
 ## NB : These method are not in the class because pycma wont accept instanceMethods, only function.. ##
 #######################################################################################################

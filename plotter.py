@@ -1,3 +1,5 @@
+### FROM : https://stackoverflow.com/questions/52910187/how-to-make-a-polygon-radar-spider-chart-in-python
+
 import matplotlib.pyplot as plt
 from matplotlib.patches import Circle, RegularPolygon
 from matplotlib.path import Path
@@ -96,10 +98,13 @@ def radar_factory(num_vars, frame='circle'):
     register_projection(RadarAxes)
     return theta
 
-
+# PARAMETER data should be like this :
+# data = [['PIT', 'STUMP', 'HEIGHT'],
+#         ('Basecase', [
+#             [0.2, 0.2, 0.8],
+#             [0.4, 0.0, 0.5],
+#             [0.6, 0.4, 0.9]])]
 def plotSpider(data):
-
-
     N = len(data[0])
     theta = radar_factory(N, frame='polygon')
 
@@ -119,4 +124,14 @@ def plotSpider(data):
     labels = ('Raw', 'Handmade Curriculum', 'POET')
     legend = ax.legend(labels, loc=(0.7, .95),
                        labelspacing=0.1, fontsize='small')
+    plt.show()
+
+def plotScoresOverDifficulty(scores, difficulties):
+
+    plt.plot(difficulties, scores, '-o',label='raw learning')
+    plt.plot(difficulties, scores, '-o',label='curriculum learning')
+    plt.plot(difficulties, scores, '-o',label='POET learning')
+    plt.ylim(-130, 360) # Worst and best score possible
+    plt.legend(loc='upper right')
+    plt.title('Agent Score over environment difficulty')
     plt.show()
