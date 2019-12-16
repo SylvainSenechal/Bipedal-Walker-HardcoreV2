@@ -121,17 +121,19 @@ def plotSpider(data):
         line = ax.plot(theta, d)
         ax.fill(theta, d,  alpha=0.25)
     ax.set_varlabels(spoke_labels)
-    labels = ('Raw', 'Handmade Curriculum', 'POET')
+    labels = ('direct', 'Handmade Curriculum', 'POET')
     legend = ax.legend(labels, loc=(0.7, .95),
                        labelspacing=0.1, fontsize='small')
     plt.show()
 
-def plotScoresOverDifficulty(scores, difficulties):
+def plotScoresOverDifficulty(scoresSTAIRS, difficultiesSTAIRS, scoresSTUMP, difficultiesSTUMP, scoresHEIGHT, difficultiesHEIGHT):
 
-    plt.plot(difficulties, scores, '-o',label='raw learning')
-    plt.plot(difficulties, scores, '-o',label='curriculum learning')
-    plt.plot(difficulties, scores, '-o',label='POET learning')
-    plt.ylim(-130, 360) # Worst and best score possible
+    plt.plot(difficultiesSTAIRS, scoresSTAIRS, '-o',label='STAIRS')
+    plt.plot(difficultiesSTUMP, scoresSTUMP, '-o',label='STUMP')
+    plt.plot(difficultiesHEIGHT, scoresHEIGHT, '-o',label='HEIGHT')
+    plt.ylim(-130, 380) # Worst and best score possible
     plt.legend(loc='upper right')
-    plt.title('Agent Score over environment difficulty')
+    plt.xlabel('Difficulty')
+    plt.ylabel('Score')
+    plt.title('Agent Score over environment difficulty, direct learning')
     plt.show()

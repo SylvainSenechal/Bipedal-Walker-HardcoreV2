@@ -5,7 +5,7 @@ from environment import BipedalWalker
 import cma # https://github.com/CMA-ES/pycma
 from cma.fitness_transformations import EvalParallel
 
-POPULATION_SIZE = 25
+POPULATION_SIZE = 100
 SIGMA_INIT = 0.3 # Otimum weigths shoudl be within +/- 3*SIGMA
 MAX_ITERATION_CMAES = 100
 ITERATIONS_STEPS_LEARNING = 300
@@ -15,7 +15,7 @@ NB_ENV_BENCHMARK = 1 # How many environnement simulation are run to mesure the 
 
 INPUT_SIZE = 24
 OUTPUT_SIZE = 4
-HIDDEN_LAYER_SIZE = 40
+HIDDEN_LAYER_SIZE = 20
 
 BIAS_VERSION = False # Are we using a neural network with bias ?
 
@@ -37,15 +37,15 @@ else:
 
 class PairAgentEnv:
     def __init__(self,
-                    difficultyPIT = 0,
+                    difficultySTAIRS = 0,
                     difficultySTUMP = 0,
                     difficultyHEIGHT = 0,
                     brain = None
                 ):
-        self.difficultyPIT = difficultyPIT,
+        self.difficultySTAIRS = difficultySTAIRS,
         self.difficultySTUMP = difficultySTUMP,
         self.difficultyHEIGHT = difficultyHEIGHT,
-        self.brain = brain if brain else np.random.randn(SIZE_BRAIN)
+        self.brain = brain if brain else np.random.randn(SIZE_BRAIN) / 3
 
     def optimize(self, fromSolution = None):
         if (fromSolution):
@@ -65,12 +65,12 @@ class PairAgentEnv:
                     'maxiter': MAX_ITERATION_CMAES
                 })
 
-        with EvalParallel(CPU_COUNT) as eval_all:
+        with EvalParallel(CPU_COUNT-2) as eval_all:
             while not es.stop():
                 noisySolutions = es.ask()
                 # es.tell(noisySolutions, eval_all(evaluateBrain, noisySolutions))
                 # Parameters of fitness function (ie : evaluateBrain) can only be passed as a tuple in pycma..
-                es.tell(noisySolutions, eval_all(evaluateBrain, noisySolutions, tuple([self.difficultyPIT, self.difficultySTUMP, self.difficultyHEIGHT])))
+                es.tell(noisySolutions, eval_all(evaluateBrain, noisySolutions, tuple([self.difficultySTAIRS, self.difficultySTUMP, self.difficultyHEIGHT])))
                 es.disp()
 
         # help(cma.CMAEvolutionStrategy) # Show documentatio
@@ -92,13 +92,13 @@ class PairAgentEnv:
 
     def benchmark(self): # This is used for displaying the agent capacity
         for i_episode in range(20):
-            print(-evaluateBrain(self.brain, self.difficultyPIT, self.difficultySTUMP, self.difficultyHEIGHT, ITERATIONS_STEPS_TESTING, False))
+            print(-evaluateBrain(self.brain, self.difficultySTAIRS, self.difficultySTUMP, self.difficultyHEIGHT, ITERATIONS_STEPS_TESTING, False))
         for i_episode in range(5):
-            print(-evaluateBrain(self.brain, self.difficultyPIT, self.difficultySTUMP, self.difficultyHEIGHT, ITERATIONS_STEPS_TESTING, True))
+            print(-evaluateBrain(self.brain, self.difficultySTAIRS, self.difficultySTUMP, self.difficultyHEIGHT, ITERATIONS_STEPS_TESTING, True))
     def benchmarkAverage(self, nbSimulationBenchmark = 10): # This one is for computing the average quality of an agent and plotting it latter
         scores = []
         for i in range(nbSimulationBenchmark):
-            scores.append(-evaluateBrain(self.brain, self.difficultyPIT, self.difficultySTUMP, self.difficultyHEIGHT, ITERATIONS_STEPS_TESTING, False))
+            scores.append(-evaluateBrain(self.brain, self.difficultySTAIRS, self.difficultySTUMP, self.difficultyHEIGHT, ITERATIONS_STEPS_TESTING, False))
         averageScore = (sum(scores) - max(scores) - min(scores)) / (nbSimulationBenchmark - 2) # Mean value excluding the best and the worst score
         return averageScore
         # print("Average Score : ", averageScore)
@@ -125,7 +125,7 @@ def actionFromBrain(state, brain):
         action = np.tanh(action)
     return action
 
-def evaluateBrain(neuralNetwork, difficultyPIT, difficultySTUMP, difficultyHEIGHT, iterationsSteps=ITERATIONS_STEPS_LEARNING, render=False):
+def evaluateBrain(neuralNetwork, difficultySTAIRS, difficultySTUMP, difficultyHEIGHT, iterationsSteps=ITERATIONS_STEPS_LEARNING, render=False):
     brain = {}
     ################ NO BIAS VERSION ################
     if (BIAS_VERSION == False):
@@ -148,11 +148,11 @@ def evaluateBrain(neuralNetwork, difficultyPIT, difficultySTUMP, difficultyHEIGH
                                     ].reshape(HIDDEN_LAYER_SIZE, OUTPUT_SIZE)
         brain['B1'] = neuralNetwork[INPUT_SIZE * HIDDEN_LAYER_SIZE + HIDDEN_LAYER_SIZE * OUTPUT_SIZE :
                                     INPUT_SIZE * HIDDEN_LAYER_SIZE + HIDDEN_LAYER_SIZE * OUTPUT_SIZE + HIDDEN_LAYER_SIZE]
-        brain['B2'] = neurneuralNetworklNetowrk[INPUT_SIZE * HIDDEN_LAYER_SIZE + HIDDEN_LAYER_SIZE * OUTPUT_SIZE + HIDDEN_LAYER_SIZE :
+        brain['B2'] = neuralNetwork[INPUT_SIZE * HIDDEN_LAYER_SIZE + HIDDEN_LAYER_SIZE * OUTPUT_SIZE + HIDDEN_LAYER_SIZE :
                                     INPUT_SIZE * HIDDEN_LAYER_SIZE + HIDDEN_LAYER_SIZE * OUTPUT_SIZE + HIDDEN_LAYER_SIZE + OUTPUT_SIZE]
 
     # env = gym.make('BipedalWalker-v2')
-    env = BipedalWalker(difficultyPIT[0], difficultySTUMP[0], difficultyHEIGHT[0])
+    env = BipedalWalker(difficultySTAIRS[0], difficultySTUMP[0], difficultyHEIGHT[0])
     # env.seed()
     total_reward = 0
     for i in range(NB_ENV_BENCHMARK):

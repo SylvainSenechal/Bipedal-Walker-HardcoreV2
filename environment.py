@@ -2,6 +2,7 @@ import sys
 import math
 
 import numpy as np
+import random
 import Box2D
 from Box2D.b2 import (edgeShape, circleShape, fixtureDef, polygonShape, revoluteJointDef, contactListener)
 
@@ -109,11 +110,11 @@ class BipedalWalker(gym.Env, EzPickle):
 
     # hardcore = False
 
-    def __init__(self, pit, stump, height):
+    def __init__(self, stairs, stump, height):
         EzPickle.__init__(self)
         self.seed()
         self.viewer = None
-        self.pit = pit
+        self.stairs = stairs
         self.stump = stump
         self.height = height
 
@@ -164,12 +165,12 @@ class BipedalWalker(gym.Env, EzPickle):
 
     def _generate_terrain(self):
         hardcore = True
-        widthPIT = self.pit
-        difficultyPIT = (self.pit + 0.001) * 4 # ]0, 4]
+        difficultySTAIRS = self.stairs # [0, 1]
         difficultySTUMP = (self.stump + 0.001) # ]0, 1]
         difficultyHEIGHT =  self.height # [0, 1]
         # GRASS, STUMP, STAIRS, PIT, _STATES_ = range(5)
-        GRASS, STUMP, PIT, _STATES_ = range(4)
+        # widthPIT = self.pit
+        GRASS, STUMP, STAIRS, _STATES_ = range(4)
         state    = GRASS
         velocity = 0.0
         y        = TERRAIN_HEIGHT
@@ -187,39 +188,39 @@ class BipedalWalker(gym.Env, EzPickle):
                 if i > TERRAIN_STARTPAD: velocity += self.np_random.uniform(-1, 1)/SCALE   #1
                 y += velocity * difficultyHEIGHT
 
-            elif state==PIT and oneshot:
-                # counter = self.np_random.randint(3, 5)
-                if (widthPIT < 0.33):
-                    counter = 2
-                elif (widthPIT < 0.66):
-                    counter = 3
-                else:
-                    counter = 4
-
-                poly = [
-                    (x,              y),
-                    (x+TERRAIN_STEP, y),
-                    (x+TERRAIN_STEP, y-difficultyPIT*TERRAIN_STEP),
-                    (x,              y-difficultyPIT*TERRAIN_STEP),
-                    ]
-                self.fd_polygon.shape.vertices=poly
-                t = self.world.CreateStaticBody(
-                    fixtures = self.fd_polygon)
-                t.color1, t.color2 = (1,1,1), (0.6,0.6,0.6)
-                self.terrain.append(t)
-
-                self.fd_polygon.shape.vertices=[(p[0]+TERRAIN_STEP*counter,p[1]) for p in poly]
-                t = self.world.CreateStaticBody(
-                    fixtures = self.fd_polygon)
-                t.color1, t.color2 = (1,1,1), (0.6,0.6,0.6)
-                self.terrain.append(t)
-                counter += 2
-                original_y = y
-
-            elif state==PIT and not oneshot:
-                y = original_y
-                if counter > 1:
-                    y -= difficultyPIT*TERRAIN_STEP
+            # elif state==PIT and oneshot:
+            #     # counter = self.np_random.randint(3, 5)
+            #     if (widthPIT < 0.33):
+            #         counter = 2
+            #     elif (widthPIT < 0.66):
+            #         counter = 3
+            #     else:
+            #         counter = 4
+            #
+            #     poly = [
+            #         (x,              y),
+            #         (x+TERRAIN_STEP, y),
+            #         (x+TERRAIN_STEP, y-difficultyPIT*TERRAIN_STEP),
+            #         (x,              y-difficultyPIT*TERRAIN_STEP),
+            #         ]
+            #     self.fd_polygon.shape.vertices=poly
+            #     t = self.world.CreateStaticBody(
+            #         fixtures = self.fd_polygon)
+            #     t.color1, t.color2 = (1,1,1), (0.6,0.6,0.6)
+            #     self.terrain.append(t)
+            #
+            #     self.fd_polygon.shape.vertices=[(p[0]+TERRAIN_STEP*counter,p[1]) for p in poly]
+            #     t = self.world.CreateStaticBody(
+            #         fixtures = self.fd_polygon)
+            #     t.color1, t.color2 = (1,1,1), (0.6,0.6,0.6)
+            #     self.terrain.append(t)
+            #     counter += 2
+            #     original_y = y
+            #
+            # elif state==PIT and not oneshot:
+            #     y = original_y
+            #     if counter > 1:
+            #         y -= difficultyPIT*TERRAIN_STEP
 
             elif state==STUMP and oneshot:
                 counter = self.np_random.randint(1, 3)
@@ -235,29 +236,43 @@ class BipedalWalker(gym.Env, EzPickle):
                 t.color1, t.color2 = (1,1,1), (0.6,0.6,0.6)
                 self.terrain.append(t)
 
-            # elif state==STAIRS and oneshot:
-            #     stair_height = +1 if self.np_random.rand() > 0.5 else -1
-            #     stair_width = self.np_random.randint(4, 5)
-            #     stair_steps = self.np_random.randint(3, 5)
-            #     original_y = y
-            #     for s in range(stair_steps):
-            #         poly = [
-            #             (x+(    s*stair_width)*TERRAIN_STEP, y+(   s*stair_height)*TERRAIN_STEP),
-            #             (x+((1+s)*stair_width)*TERRAIN_STEP, y+(   s*stair_height)*TERRAIN_STEP),
-            #             (x+((1+s)*stair_width)*TERRAIN_STEP, y+(-1+s*stair_height)*TERRAIN_STEP),
-            #             (x+(    s*stair_width)*TERRAIN_STEP, y+(-1+s*stair_height)*TERRAIN_STEP),
-            #             ]
-            #         self.fd_polygon.shape.vertices=poly
-            #         t = self.world.CreateStaticBody(
-            #             fixtures = self.fd_polygon)
-            #         t.color1, t.color2 = (1,1,1), (0.6,0.6,0.6)
-            #         self.terrain.append(t)
-            #     counter = stair_steps*stair_width
-            #
-            # elif state==STAIRS and not oneshot:
-            #     s = stair_steps*stair_width - counter - stair_height
-            #     n = s/stair_width
-            #     y = original_y + (n*stair_height)*TERRAIN_STEP
+            elif state==STAIRS and oneshot:
+                stair_height = + difficultySTAIRS if random.uniform(0, 1) > 0.5 else - difficultySTAIRS
+                stair_width = self.np_random.randint(4, 5)
+                stair_steps = self.np_random.randint(1, 5)
+                if (difficultySTAIRS < 0.2):
+                    stair_steps = 1
+                elif (difficultySTAIRS < 0.4):
+                    stair_steps = 2
+                elif (difficultySTAIRS < 0.6):
+                    stair_steps = 3
+                elif (difficultySTAIRS < 0.8):
+                    stair_steps = 4
+                else:
+                    stair_steps = 5
+                original_y = y
+                for s in range(stair_steps):
+                    poly = [
+                        (x+(    s*stair_width)*TERRAIN_STEP, y+(   s*stair_height)*TERRAIN_STEP),
+                        (x+((1+s)*stair_width)*TERRAIN_STEP, y+(   s*stair_height)*TERRAIN_STEP),
+                        (x+((1+s)*stair_width)*TERRAIN_STEP, y+(-1+s*stair_height)*TERRAIN_STEP),
+                        (x+(    s*stair_width)*TERRAIN_STEP, y+(-1+s*stair_height)*TERRAIN_STEP),
+                        ]
+                    self.fd_polygon.shape.vertices=poly
+                    t = self.world.CreateStaticBody(
+                        fixtures = self.fd_polygon)
+                    t.color1, t.color2 = (1,1,1), (0.6,0.6,0.6)
+                    self.terrain.append(t)
+                counter = stair_steps*stair_width
+
+            elif state==STAIRS and not oneshot:
+                s = stair_steps*stair_width - counter - stair_height
+                n = s/stair_width
+                if (stair_height > 0):
+                    y = original_y + (n*stair_height)*TERRAIN_STEP - stair_height/2
+                else:
+                    y = original_y + (n*stair_height)*TERRAIN_STEP
+
 
             oneshot = False
             # self.terrain_y.append(TERRAIN_HEIGHT) ########### normal :

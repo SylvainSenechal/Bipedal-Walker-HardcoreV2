@@ -2,7 +2,7 @@ from environment import BipedalWalker
 
 def evaluateNeuralNetwork(iterationsSteps=2000, render=True):
 
-    env = BipedalWalker(0, 0, 0)
+    env = BipedalWalker(0.8, 0, 0)
     total_reward = 0
 
     state = env.reset()
