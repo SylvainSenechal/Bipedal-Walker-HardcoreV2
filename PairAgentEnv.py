@@ -1,5 +1,6 @@
 import multiprocessing
 import numpy as np
+import random
 
 from environment import BipedalWalker
 import cma # https://github.com/CMA-ES/pycma
@@ -7,7 +8,7 @@ from cma.fitness_transformations import EvalParallel
 
 POPULATION_SIZE = 100
 SIGMA_INIT = 0.3 # Otimum weigths shoudl be within +/- 3*SIGMA
-MAX_ITERATION_CMAES = 100
+DEFAULT_MAX_ITERATION_CMAES = 100
 ITERATIONS_STEPS_LEARNING = 300
 ITERATIONS_STEPS_TESTING = 2000
 CPU_COUNT = multiprocessing.cpu_count()
@@ -40,12 +41,14 @@ class PairAgentEnv:
                     difficultySTAIRS = 0,
                     difficultySTUMP = 0,
                     difficultyHEIGHT = 0,
-                    brain = None
+                    brain = None,
+                    iterationCMAES = DEFAULT_MAX_ITERATION_CMAES
                 ):
         self.difficultySTAIRS = difficultySTAIRS,
         self.difficultySTUMP = difficultySTUMP,
         self.difficultyHEIGHT = difficultyHEIGHT,
         self.brain = brain if brain else np.random.randn(SIZE_BRAIN) / 3
+        self.iterationCMAES = iterationCMAES
 
     def optimize(self, fromSolution = None):
         if (fromSolution):
@@ -54,15 +57,16 @@ class PairAgentEnv:
                 SIGMA_INIT,
                 {
                     'popsize': POPULATION_SIZE,
-                    'maxiter': MAX_ITERATION_CMAES
+                    'maxiter': self.iterationCMAES
                 })
         else:
             es = cma.CMAEvolutionStrategy(
-                SIZE_BRAIN * [0],
+                # SIZE_BRAIN * [0],
+                self.brain,
                 SIGMA_INIT,
                 {
                     'popsize': POPULATION_SIZE,
-                    'maxiter': MAX_ITERATION_CMAES
+                    'maxiter': self.iterationCMAES
                 })
 
         with EvalParallel(CPU_COUNT-2) as eval_all:
@@ -76,8 +80,19 @@ class PairAgentEnv:
         # help(cma.CMAEvolutionStrategy) # Show documentatio
         res = es.result
         # es.result_pretty()
-        self.brain = res.xfavorite
+        self.brain = res.xfavorite # Updating brain with best solution
 
+    def mutate(self):
+        if random.uniform(0, 1) > 0.4:
+            newDiff = self.difficultySTAIRS[0] + (- 0.02 + random.uniform(0, 0.1)) # + [-0.02, +0.08] added to difficulty
+            self.difficultySTAIRS = max(min(1, newDiff), 0), # constraint in [0, 1]
+        if random.uniform(0, 1) > 0.4:
+            newDiff = self.difficultySTUMP[0] + (- 0.02 + random.uniform(0, 0.1))
+            self.difficultySTUMP = max(min(1, newDiff), 0),
+        if random.uniform(0, 1) > 0.4:
+            newDiff = self.difficultyHEIGHT[0] + (- 0.02 + random.uniform(0, 0.1))
+            self.difficultyHEIGHT = max(min(1, newDiff), 0),
+        return self
     def saveBrain(self, filename):
         with open("savedAgent/" + filename, "w+") as file:
             for weight in self.brain:
@@ -95,13 +110,16 @@ class PairAgentEnv:
             print(-evaluateBrain(self.brain, self.difficultySTAIRS, self.difficultySTUMP, self.difficultyHEIGHT, ITERATIONS_STEPS_TESTING, False))
         for i_episode in range(5):
             print(-evaluateBrain(self.brain, self.difficultySTAIRS, self.difficultySTUMP, self.difficultyHEIGHT, ITERATIONS_STEPS_TESTING, True))
+        print('##### End benchmark #####')
     def benchmarkAverage(self, nbSimulationBenchmark = 10): # This one is for computing the average quality of an agent and plotting it latter
         scores = []
         for i in range(nbSimulationBenchmark):
             scores.append(-evaluateBrain(self.brain, self.difficultySTAIRS, self.difficultySTUMP, self.difficultyHEIGHT, ITERATIONS_STEPS_TESTING, False))
         averageScore = (sum(scores) - max(scores) - min(scores)) / (nbSimulationBenchmark - 2) # Mean value excluding the best and the worst score
+        print("Average Score : ", averageScore)
+        print('##### End benchmark #####')
         return averageScore
-        # print("Average Score : ", averageScore)
+
 
 #######################################################################################################
 ## NB : These method are not in the class because pycma wont accept instanceMethods, only function.. ##
