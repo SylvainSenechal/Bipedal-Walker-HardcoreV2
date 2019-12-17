@@ -22,8 +22,7 @@ THRESHOLD_TOO_HARD = 50
 THRESHOLD_TOO_EASY = 200
 THRESHOLD_MUTATE = 100
 MAX_ACTIVE_PAIRS = 5
-
-ITERATION_POET = 15
+VERSION = 2 # Writting to new files for new algorithm
 
 
 # We will compare a classic raw learning with a Handmade curriculum and "POET" learning
@@ -45,8 +44,15 @@ def poetLearning(mutationInterval = 1, transferInterval = 1): # intervals = 1 he
             print('stairs : ', pair.difficultySTAIRS[0])
             print('stumps : ', pair.difficultySTUMP[0])
             print('height : ', pair.difficultyHEIGHT[0])
-            pair.saveBrain("brainPOET" + str(nb) + ".txt")
-            pair.saveDifficulty("difficultyPOET" + str(nb) + ".txt")
+            pair.saveBrain("brainPOET_V" + str(VERSION) + "_" + str(nb) + ".txt")
+            pair.saveLastDifficulty("difficultyLastPOET_V" + str(VERSION) + "_" + str(nb) + ".txt")
+            if (nb == (len(listPairs) - 1)):
+                pair.saveDifficulty("difficultyPOET_V" + str(VERSION) + "_" + str(nb) + ".txt", True)
+                pair.saveDifficulty("difficultyPOET_V" + str(VERSION) + "_" + ".txt", True)
+            else:
+                pair.saveDifficulty("difficultyPOET_V" + str(VERSION) + "_" + str(nb) + ".txt", False)
+                pair.saveDifficulty("difficultyPOET_V" + str(VERSION) + "_" + ".txt", False)
+            pair.addListDifficulty(iteration)
         if (iteration > 0 and (iteration % mutationInterval) == 0): # Creating new environnements
             listPairs = mutateEnvironment(listPairs)
         for pair in listPairs: # Optimizing each pair
@@ -75,7 +81,8 @@ def savePOET(listPairs):
     pass
 def loadAndBenchmarkPOET():
     pass
-
+# TODO: plot les évolutions de difficultés
+# # TODO: difficulte moyennees sur l'ensemble des environnements
 def mutateEnvironment(listPairs):
     # FIRST : We evaluate each pair, and create a parentList of environments eligible to reproduce,
     # when their agent have a certain score above a threshold
@@ -97,10 +104,12 @@ def mutateEnvironment(listPairs):
             childListFiltered.append(child)
     # FOURTH : We add the child to the orignial listPairs
     for child in childListFiltered:
+        child.listDifficulty = []
         listPairs.append(child)
     # FIFTH : We remove some pair if the list is too big
     pairSize = len(listPairs)
     while pairSize > MAX_ACTIVE_PAIRS:
+            listPairs[0].saveListDifficulty("listDifficulty_V" + str(VERSION) + ".txt")
             listPairs.pop(0) # Removing oldest pair when there are too many pairs
             pairSize -= 1
     print('new listPairs : ', listPairs)
@@ -159,7 +168,9 @@ def environnementDifficulty(difficultySTAIRS, difficultySTUMP, difficultyHEIGHT)
     return (difficultySTAIRS * 2 + difficultySTUMP * 2 + difficultyHEIGHT) / 5 # (normalized [0, 1], height count less than other)
 
 def main():
-    # pair = PairAgentEnv(difficultySTAIRS = 0, difficultySTUMP = 0.3, difficultyHEIGHT = 0)
+    # pair = PairAgentEnv(difficultySTAIRS = 0.76, difficultySTUMP = 0.3, difficultyHEIGHT = 1)
+    # pair.loadBrain("brainPOET1.txt")
+
     # pair.optimize()
     # print(pair.benchmarkAverage())
     # pair.benchmark()

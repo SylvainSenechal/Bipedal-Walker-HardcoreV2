@@ -9,7 +9,7 @@ from cma.fitness_transformations import EvalParallel
 POPULATION_SIZE = 100
 SIGMA_INIT = 0.3 # Otimum weigths shoudl be within +/- 3*SIGMA
 DEFAULT_MAX_ITERATION_CMAES = 100
-ITERATIONS_STEPS_LEARNING = 300
+ITERATIONS_STEPS_LEARNING = 500
 ITERATIONS_STEPS_TESTING = 2000
 CPU_COUNT = multiprocessing.cpu_count()
 NB_ENV_BENCHMARK = 1 # How many environnement simulation are run to mesure the quality of an agent ?
@@ -49,6 +49,7 @@ class PairAgentEnv:
         self.difficultyHEIGHT = difficultyHEIGHT,
         self.brain = brain if brain else np.random.randn(SIZE_BRAIN) / 3
         self.iterationCMAES = iterationCMAES
+        self.listDifficulty = []
 
     def optimize(self, fromSolution = None):
         if (fromSolution):
@@ -97,17 +98,36 @@ class PairAgentEnv:
         with open("savedAgent/" + filename, "w+") as file:
             for weight in self.brain:
                 file.write(str(weight) + "\n")
-    def saveDifficulty(self, filename):
-        with open("savedAgent/" + filename, "w+") as file:
-            file.write(str(self.difficultySTAIRS[0]) + "\n")
-            file.write(str(self.difficultySTUMP[0]) + "\n")
-            file.write(str(self.difficultyHEIGHT[0]) + "\n")
     def loadBrain(self, filename):
         brain = []
         with open("savedAgent/" + filename, "r") as file:
             for weight in file:
                 brain.append(float(weight.strip()))
         self.brain = np.array(brain)
+
+    def saveLastDifficulty(self, filename): # Keep the last difficulty of the algorithm
+        with open("savedAgent/" + filename, "w+") as file:
+            file.write(str(self.difficultySTAIRS[0]) + "\n")
+            file.write(str(self.difficultySTUMP[0]) + "\n")
+            file.write(str(self.difficultyHEIGHT[0]) + "\n")
+    def saveDifficulty(self, filename, end): # Keep history of all difficulties through the algorithm
+        with open("savedAgent/" + filename, "a") as file:
+            file.write(str(self.difficultySTAIRS[0]) + "\n")
+            file.write(str(self.difficultySTUMP[0]) + "\n")
+            file.write(str(self.difficultyHEIGHT[0]) + "\n")
+            if end:
+                file.write("#" + "\n")
+    def addListDifficulty(self, iteration):
+        self.listDifficulty.append(self.difficultySTAIRS[0])
+        self.listDifficulty.append(self.difficultySTUMP[0])
+        self.listDifficulty.append(self.difficultyHEIGHT[0])
+        self.listDifficulty.append(iteration)
+    def saveListDifficulty(filename):
+        with open("savedAgent/" + filename, "a") as file:
+            for difficulty in self.listDifficulty:
+                file.write(str(difficulty) + "\n")
+            file.write('#' + "\n")
+
 
     def benchmark(self): # This is used for displaying the agent capacity
         for i_episode in range(20):
