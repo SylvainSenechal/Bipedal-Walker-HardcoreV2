@@ -44,7 +44,7 @@ class PairAgentEnv:
                     brain = None,
                     iterationCMAES = DEFAULT_MAX_ITERATION_CMAES
                 ):
-        self.difficultySTAIRS = difficultySTAIRS,
+        self.difficultySTAIRS = difficultySTAIRS, # NB : we need a tuple because of Pycma later in the code..
         self.difficultySTUMP = difficultySTUMP,
         self.difficultyHEIGHT = difficultyHEIGHT,
         self.brain = brain if brain else np.random.randn(SIZE_BRAIN) / 3
@@ -77,27 +77,31 @@ class PairAgentEnv:
                 es.tell(noisySolutions, eval_all(evaluateBrain, noisySolutions, tuple([self.difficultySTAIRS, self.difficultySTUMP, self.difficultyHEIGHT])))
                 es.disp()
 
-        # help(cma.CMAEvolutionStrategy) # Show documentatio
+        # help(cma.CMAEvolutionStrategy) # Show documentation
         res = es.result
         # es.result_pretty()
         self.brain = res.xfavorite # Updating brain with best solution
 
     def mutate(self):
-        if random.uniform(0, 1) > 0.4:
-            newDiff = self.difficultySTAIRS[0] + (- 0.02 + random.uniform(0, 0.1)) # + [-0.02, +0.08] added to difficulty
+        if random.uniform(0, 1) > 0.3:
+            newDiff = self.difficultySTAIRS[0] + (- 0.03 + random.uniform(0, 0.23)) # + [-0.03, +0.20] added to difficulty
             self.difficultySTAIRS = max(min(1, newDiff), 0), # constraint in [0, 1]
-        if random.uniform(0, 1) > 0.4:
-            newDiff = self.difficultySTUMP[0] + (- 0.02 + random.uniform(0, 0.1))
+        if random.uniform(0, 1) > 0.3:
+            newDiff = self.difficultySTUMP[0] + (- 0.03 + random.uniform(0, 0.23))
             self.difficultySTUMP = max(min(1, newDiff), 0),
-        if random.uniform(0, 1) > 0.4:
-            newDiff = self.difficultyHEIGHT[0] + (- 0.02 + random.uniform(0, 0.1))
+        if random.uniform(0, 1) > 0.3:
+            newDiff = self.difficultyHEIGHT[0] + (- 0.03 + random.uniform(0, 0.23))
             self.difficultyHEIGHT = max(min(1, newDiff), 0),
         return self
     def saveBrain(self, filename):
         with open("savedAgent/" + filename, "w+") as file:
             for weight in self.brain:
                 file.write(str(weight) + "\n")
-
+    def saveDifficulty(self, filename):
+        with open("savedAgent/" + filename, "w+") as file:
+            file.write(str(self.difficultySTAIRS[0]) + "\n")
+            file.write(str(self.difficultySTUMP[0]) + "\n")
+            file.write(str(self.difficultyHEIGHT[0]) + "\n")
     def loadBrain(self, filename):
         brain = []
         with open("savedAgent/" + filename, "r") as file:
@@ -111,13 +115,14 @@ class PairAgentEnv:
         for i_episode in range(5):
             print(-evaluateBrain(self.brain, self.difficultySTAIRS, self.difficultySTUMP, self.difficultyHEIGHT, ITERATIONS_STEPS_TESTING, True))
         print('##### End benchmark #####')
-    def benchmarkAverage(self, nbSimulationBenchmark = 10): # This one is for computing the average quality of an agent and plotting it latter
+    def benchmarkAverage(self, nbSimulationBenchmark = 10, displayScore = False): # This one is for computing the average quality of an agent and plotting it latter
         scores = []
         for i in range(nbSimulationBenchmark):
             scores.append(-evaluateBrain(self.brain, self.difficultySTAIRS, self.difficultySTUMP, self.difficultyHEIGHT, ITERATIONS_STEPS_TESTING, False))
         averageScore = (sum(scores) - max(scores) - min(scores)) / (nbSimulationBenchmark - 2) # Mean value excluding the best and the worst score
-        print("Average Score : ", averageScore)
-        print('##### End benchmark #####')
+        if displayScore:
+            print("Average Score : ", averageScore)
+            print('##### End benchmark #####')
         return averageScore
 
 

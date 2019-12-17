@@ -16,14 +16,14 @@ import copy
 # TODO: à voir :
 ## REMETTRE CPU COUNT
 ## attention hidden layer
-## le learning fromSolution
+##### !!! le learning fromSolution
 
 THRESHOLD_TOO_HARD = 50
 THRESHOLD_TOO_EASY = 200
-THRESHOLD_MUTATE = 120
+THRESHOLD_MUTATE = 100
 MAX_ACTIVE_PAIRS = 5
 
-ITERATION_POET = 10
+ITERATION_POET = 15
 
 
 # We will compare a classic raw learning with a Handmade curriculum and "POET" learning
@@ -33,13 +33,20 @@ def poetLearning(mutationInterval = 1, transferInterval = 1): # intervals = 1 he
     pair = PairAgentEnv(difficultySTAIRS = 0, difficultySTUMP = 0, difficultyHEIGHT = 0, iterationCMAES = 25)
     listPairs.append(pair)
 
-    for iteration in range(ITERATION_POET):
+    # for iteration in range(ITERATION_POET):
+    iteration = 0
+    while True:
+        iteration += 1
+        print('#########################################################################################################################################################')
         print('############################################################ POET iteration n°', iteration, '############################################################')
+        print('#########################################################################################################################################################')
         for nb, pair in enumerate(listPairs):
             print('##### Difficulty pair n°', nb)
             print('stairs : ', pair.difficultySTAIRS[0])
             print('stumps : ', pair.difficultySTUMP[0])
             print('height : ', pair.difficultyHEIGHT[0])
+            pair.saveBrain("brainPOET" + str(nb) + ".txt")
+            pair.saveDifficulty("difficultyPOET" + str(nb) + ".txt")
         if (iteration > 0 and (iteration % mutationInterval) == 0): # Creating new environnements
             listPairs = mutateEnvironment(listPairs)
         for pair in listPairs: # Optimizing each pair
@@ -64,6 +71,11 @@ def bestBrain(listPairs, pair): # We are picking the best brain for the environ
             bestBrain = localPair.brain
     return copy.deepcopy(bestBrain)
 
+def savePOET(listPairs):
+    pass
+def loadAndBenchmarkPOET():
+    pass
+
 def mutateEnvironment(listPairs):
     # FIRST : We evaluate each pair, and create a parentList of environments eligible to reproduce,
     # when their agent have a certain score above a threshold
@@ -75,7 +87,7 @@ def mutateEnvironment(listPairs):
     # SECOND : Selected parents are then mutated into child
     childList = []
     for parent in parentEnvironments:
-        childList.append(copy.deepcopy(parent.mutate()))
+        childList.append(copy.deepcopy(parent).mutate())
     # THIRD : Generated childs are then filtered so we only keep environments with the right difficulty
     childListFiltered = []
     for child in childList:
