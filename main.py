@@ -1,5 +1,5 @@
 from PairAgentEnv import PairAgentEnv
-from plotter import plotSpider, plotScoresOverDifficulty
+from plotter import plotSpider, plotScoresOverDifficulty, plotDifficultyReached, plotListDifficulties
 import copy
 
 # nb : install gym with : pip install 'gym[all]'
@@ -22,7 +22,7 @@ THRESHOLD_TOO_HARD = 50
 THRESHOLD_TOO_EASY = 200
 THRESHOLD_MUTATE = 100
 MAX_ACTIVE_PAIRS = 5
-VERSION = 2 # Writting to new files for new algorithm
+VERSION = 3 # Writting to new files for new algorithm
 
 
 # We will compare a classic raw learning with a Handmade curriculum and "POET" learning
@@ -157,31 +157,27 @@ def directLearning(): # 2 hours to run on 12 cores
 
     plotScoresOverDifficulty(scoresSTAIRS, difficultiesSTAIRS, scoresSTUMP, difficultiesSTUMP, scoresHEIGHT, difficultiesHEIGHT)
 
-# data = [['STAIRS', 'STUMP', 'HEIGHT'],
-#         ('', [
-#             [0.2, 0.2, 0.8],
-#             [0.4, 0.0, 0.5],
-#             [0.6, 0.4, 0.9]])]
-# plotSpider(data)
 
+
+# TODO: remove useless function ?
 def environnementDifficulty(difficultySTAIRS, difficultySTUMP, difficultyHEIGHT): # used for plotting latter
     return (difficultySTAIRS * 2 + difficultySTUMP * 2 + difficultyHEIGHT) / 5 # (normalized [0, 1], height count less than other)
 
 def main():
-    # pair = PairAgentEnv(difficultySTAIRS = 0.76, difficultySTUMP = 0.3, difficultyHEIGHT = 1)
-    # pair.loadBrain("brainPOET1.txt")
+    pair = PairAgentEnv(difficultySTAIRS = 0, difficultySTUMP = 0, difficultyHEIGHT = 0)
+    # pair.loadBrain("brainPOET_V2_2.txt")
+    # pair.loadBrain("brainPOET0.txt")
 
     # pair.optimize()
-    # print(pair.benchmarkAverage())
+    # pair.benchmarkAverage()
     # pair.benchmark()
 
-    poetLearning()
+
+    # plotDifficultyReached()
+    plotListDifficulties()
+    # poetLearning()
     # directLearning()
 
-    # pair.saveBrain("brain1.txt")
-    # pair2 = PairAgentEnv(difficultyPIT = 0, difficultySTUMP = 0, difficultyHEIGHT = 1)
-    # pair2.loadBrain("brain1.txt")
-    # pair2.benchmark()
 
 if __name__== "__main__":
     main()

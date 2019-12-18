@@ -51,25 +51,15 @@ class PairAgentEnv:
         self.iterationCMAES = iterationCMAES
         self.listDifficulty = []
 
-    def optimize(self, fromSolution = None):
-        if (fromSolution):
-            es = cma.CMAEvolutionStrategy(
-                fromSolution,
-                SIGMA_INIT,
-                {
-                    'popsize': POPULATION_SIZE,
-                    'maxiter': self.iterationCMAES
-                })
-        else:
-            es = cma.CMAEvolutionStrategy(
-                # SIZE_BRAIN * [0],
-                self.brain,
-                SIGMA_INIT,
-                {
-                    'popsize': POPULATION_SIZE,
-                    'maxiter': self.iterationCMAES
-                })
-
+    def optimize(self):
+        es = cma.CMAEvolutionStrategy(
+            # SIZE_BRAIN * [0],
+            self.brain,
+            SIGMA_INIT,
+            {
+                'popsize': POPULATION_SIZE,
+                'maxiter': self.iterationCMAES
+            })
         with EvalParallel(CPU_COUNT-2) as eval_all:
             while not es.stop():
                 noisySolutions = es.ask()
@@ -122,7 +112,7 @@ class PairAgentEnv:
         self.listDifficulty.append(self.difficultySTUMP[0])
         self.listDifficulty.append(self.difficultyHEIGHT[0])
         self.listDifficulty.append(iteration)
-    def saveListDifficulty(filename):
+    def saveListDifficulty(self, filename):
         with open("savedAgent/" + filename, "a") as file:
             for difficulty in self.listDifficulty:
                 file.write(str(difficulty) + "\n")
@@ -131,9 +121,9 @@ class PairAgentEnv:
 
     def benchmark(self): # This is used for displaying the agent capacity
         for i_episode in range(20):
-            print(-evaluateBrain(self.brain, self.difficultySTAIRS, self.difficultySTUMP, self.difficultyHEIGHT, ITERATIONS_STEPS_TESTING, False))
+            print("score : ", -evaluateBrain(self.brain, self.difficultySTAIRS, self.difficultySTUMP, self.difficultyHEIGHT, ITERATIONS_STEPS_TESTING, False))
         for i_episode in range(5):
-            print(-evaluateBrain(self.brain, self.difficultySTAIRS, self.difficultySTUMP, self.difficultyHEIGHT, ITERATIONS_STEPS_TESTING, True))
+            print("score : ", -evaluateBrain(self.brain, self.difficultySTAIRS, self.difficultySTUMP, self.difficultyHEIGHT, ITERATIONS_STEPS_TESTING, True))
         print('##### End benchmark #####')
     def benchmarkAverage(self, nbSimulationBenchmark = 10, displayScore = False): # This one is for computing the average quality of an agent and plotting it latter
         scores = []

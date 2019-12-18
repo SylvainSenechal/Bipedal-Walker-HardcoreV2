@@ -29,6 +29,8 @@ def radar_factory(num_vars, frame='circle'):
     class RadarAxes(PolarAxes):
 
         name = 'radar'
+        # use 1 line segment to connect specified points
+        RESOLUTION = 1
 
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -67,15 +69,6 @@ def radar_factory(num_vars, frame='circle'):
             else:
                 raise ValueError("unknown value for 'frame': %s" % frame)
 
-        def draw(self, renderer):
-            """ Draw. If frame is polygon, make gridlines polygon-shaped """
-            if frame == 'polygon':
-                gridlines = self.yaxis.get_gridlines()
-                for gl in gridlines:
-                    gl.get_path()._interpolation_steps = num_vars
-            super().draw(renderer)
-
-
         def _gen_axes_spines(self):
             if frame == 'circle':
                 return super()._gen_axes_spines()
@@ -89,8 +82,6 @@ def radar_factory(num_vars, frame='circle'):
                 # 0.5) in axes coordinates.
                 spine.set_transform(Affine2D().scale(.5).translate(.5, .5)
                                     + self.transAxes)
-
-
                 return {'polar': spine}
             else:
                 raise ValueError("unknown value for 'frame': %s" % frame)
@@ -99,33 +90,105 @@ def radar_factory(num_vars, frame='circle'):
     return theta
 
 # PARAMETER data should be like this :
-# data = [['PIT', 'STUMP', 'HEIGHT'],
+# data = [['STAIRS', 'STUMP', 'HEIGHT'],
 #         ('Basecase', [
 #             [0.2, 0.2, 0.8],
 #             [0.4, 0.0, 0.5],
 #             [0.6, 0.4, 0.9]])]
-def plotSpider(data):
+def plotSpider(data, nbAgent):
     N = len(data[0])
-    theta = radar_factory(N, frame='polygon')
+    print(data)
+    print(N)
+    theta = radar_factory(N, frame='circle')
 
     spoke_labels = data.pop(0)
     title, case_data = data[0]
 
     fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(projection='radar'))
-    fig.subplots_adjust(top=0.85, bottom=0.05)
+    fig.subplots_adjust(wspace=0.25, hspace=0.20, top=0.85, bottom=0.05)
 
     ax.set_rgrids([0.2, 0.4, 0.6, 0.8])
-    ax.set_title(title,  position=(0.5, 1.1), ha='center')
+    # ax.set_title(title,  position=(0.5, 1.1), ha='center')
 
     for d in case_data:
         line = ax.plot(theta, d)
-        ax.fill(theta, d,  alpha=0.25)
+        ax.plot(theta, d,  alpha=0.0)
     ax.set_varlabels(spoke_labels)
-    labels = ('direct', 'Handmade Curriculum', 'POET')
-    legend = ax.legend(labels, loc=(0.7, .95),
-                       labelspacing=0.1, fontsize='small')
+    # labels = ('direct', 'oui')
+    # legend = ax.legend(labels, loc=(0.9, .95),
+    #                    labelspacing=0.1, fontsize='small')
+    plt.title('Maximum difficulty solved poet pair n°' + str(nbAgent))
     plt.show()
 
+def plotDifficultyReached():
+    for i in range(5):
+        difficulties = []
+        with open("savedAgent/difficultyLastPOET_V2_" + str(i) + ".txt", "r") as file:
+            for difficulty in file:
+                difficulties.append(float(difficulty.strip()))
+        difficulties.append(1.0) # ROUGHNESS
+        difficulties.append(0.0) # GAP_WIDTH
+        data = [['STAIRS', 'STUMP', 'HEIGHT', 'ROUGHNESS', 'GAP_WIDTH'],
+                ('Basecase', [
+                    difficulties,
+                    ])]
+        plotSpider(data, i)
+
+def plotListDifficulties():
+    listIterations, listStairs, listStumps, listHeight, listSumDifficulties = [], [], [], [], []
+    iterations, stairs, stumps, heights, SumDifficulties = [], [], [], [], []
+    cursor = 0
+    sum = 0
+    with open("savedAgent/listDifficulty_V2.txt", "r") as file:
+        for info in file:
+            cursor += 1
+            if info.strip() == '#':
+                listIterations.append(iterations)
+                listStairs.append(stairs)
+                listStumps.append(stumps)
+                listHeight.append(heights)
+                listSumDifficulties.append(SumDifficulties)
+                iterations = []
+                stairs = []
+                stumps = []
+                heights = []
+                SumDifficulties = []
+                cursor = 0
+                sum = 0
+            elif cursor == 1:
+                stairs.append(info.strip())
+                sum += float(info.strip())
+            elif cursor == 2:
+                stumps.append(info.strip())
+                sum += float(info.strip())
+            elif cursor == 3:
+                heights.append(info.strip())
+                sum += float(info.strip())
+                SumDifficulties.append(sum)
+                print(sum)
+                print("##")
+                sum = 0
+            elif cursor == 4:
+                iterations.append(info.strip())
+                cursor = 0
+    print(listStairs[10])
+    print(listStumps[10])
+    print(listHeight[10])
+    print(listSumDifficulties[10])
+    print(len(listSumDifficulties))
+    print(len(listStairs))
+    for agent in range(len(listIterations)):
+        plt.plot(listIterations[agent], listStairs[agent])
+    plt.show()
+    for agent in range(len(listIterations)):
+        plt.plot(listIterations[agent], listStumps[agent])
+    plt.show()
+    for agent in range(len(listIterations)):
+        plt.plot(listIterations[agent], listHeight[agent])
+    plt.show()
+    for agent in range(len(listIterations)):
+        plt.plot(listIterations[agent], listSumDifficulties[agent])
+    plt.show()
 def plotScoresOverDifficulty(scoresSTAIRS, difficultiesSTAIRS, scoresSTUMP, difficultiesSTUMP, scoresHEIGHT, difficultiesHEIGHT):
 
     plt.plot(difficultiesSTAIRS, scoresSTAIRS, '-o',label='STAIRS')
