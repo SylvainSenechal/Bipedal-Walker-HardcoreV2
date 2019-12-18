@@ -114,23 +114,37 @@ def plotSpider(data, nbAgent):
         line = ax.plot(theta, d)
         ax.plot(theta, d,  alpha=0.0)
     ax.set_varlabels(spoke_labels)
-    # labels = ('direct', 'oui')
-    # legend = ax.legend(labels, loc=(0.9, .95),
-    #                    labelspacing=0.1, fontsize='small')
+    labels = ('POET', 'curriculum 1', 'curriculum 2')
+    legend = ax.legend(labels, loc=(0.9, .95),
+                       labelspacing=0.1, fontsize='small')
     plt.title('Maximum difficulty solved poet pair n°' + str(nbAgent))
     plt.show()
 
 def plotDifficultyReached():
+    curriculumDiff1, curriculumDiff2 = [], []
+    with open("savedAgent/difficultyLastCURRICULUM_V4_.txt") as file:
+        for difficulty in file:
+            curriculumDiff1.append(float(difficulty))
+        curriculumDiff1.append(1.0) # ROUGHNESS
+        curriculumDiff1.append(0.0) # GAP_WIDTH
+    with open("savedAgent/difficultyLastCURRICULUM_V5_.txt") as file:
+        for difficulty in file:
+            curriculumDiff2.append(float(difficulty))
+        curriculumDiff2.append(1.0) # ROUGHNESS
+        curriculumDiff2.append(0.0) # GAP_WIDTH
     for i in range(5):
         difficulties = []
-        with open("savedAgent/difficultyLastPOET_V2_" + str(i) + ".txt", "r") as file:
+        with open("savedAgent/difficultyLastPOET_V3_" + str(i) + ".txt", "r") as file:
             for difficulty in file:
                 difficulties.append(float(difficulty.strip()))
         difficulties.append(1.0) # ROUGHNESS
         difficulties.append(0.0) # GAP_WIDTH
+
         data = [['STAIRS', 'STUMP', 'HEIGHT', 'ROUGHNESS', 'GAP_WIDTH'],
                 ('Basecase', [
                     difficulties,
+                    curriculumDiff1,
+                    curriculumDiff2
                     ])]
         plotSpider(data, i)
 
@@ -139,7 +153,8 @@ def plotListDifficulties():
     iterations, stairs, stumps, heights, SumDifficulties = [], [], [], [], []
     cursor = 0
     sum = 0
-    with open("savedAgent/listDifficulty_V2.txt", "r") as file:
+    with open("savedAgent/listDifficulty_V3.txt", "r") as file:
+    # with open("savedAgent/listDifficultyCURRICULUM_V4.txt", "r") as file:
         for info in file:
             cursor += 1
             if info.strip() == '#':
@@ -148,35 +163,26 @@ def plotListDifficulties():
                 listStumps.append(stumps)
                 listHeight.append(heights)
                 listSumDifficulties.append(SumDifficulties)
-                iterations = []
-                stairs = []
-                stumps = []
-                heights = []
-                SumDifficulties = []
+                iterations, stairs, stumps, heights, SumDifficulties = [], [], [], [], []
                 cursor = 0
                 sum = 0
             elif cursor == 1:
-                stairs.append(info.strip())
+                stairs.append(float(info.strip()))
                 sum += float(info.strip())
             elif cursor == 2:
-                stumps.append(info.strip())
+                stumps.append(float(info.strip()))
                 sum += float(info.strip())
             elif cursor == 3:
-                heights.append(info.strip())
+                heights.append(float(info.strip()))
                 sum += float(info.strip())
-                SumDifficulties.append(sum)
+                SumDifficulties.append(sum/3)
                 print(sum)
                 print("##")
                 sum = 0
             elif cursor == 4:
-                iterations.append(info.strip())
+                iterations.append(float(info.strip()))
                 cursor = 0
-    print(listStairs[10])
-    print(listStumps[10])
-    print(listHeight[10])
-    print(listSumDifficulties[10])
-    print(len(listSumDifficulties))
-    print(len(listStairs))
+    plt.ylim(0, 1)
     for agent in range(len(listIterations)):
         plt.plot(listIterations[agent], listStairs[agent])
     plt.show()

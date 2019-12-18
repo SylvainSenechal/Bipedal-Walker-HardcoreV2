@@ -22,7 +22,7 @@ THRESHOLD_TOO_HARD = 50
 THRESHOLD_TOO_EASY = 200
 THRESHOLD_MUTATE = 100
 MAX_ACTIVE_PAIRS = 5
-VERSION = 3 # Writting to new files for new algorithm
+VERSION = 5 # Writting to new files for new algorithm
 
 
 # We will compare a classic raw learning with a Handmade curriculum and "POET" learning
@@ -77,12 +77,6 @@ def bestBrain(listPairs, pair): # We are picking the best brain for the environ
             bestBrain = localPair.brain
     return copy.deepcopy(bestBrain)
 
-def savePOET(listPairs):
-    pass
-def loadAndBenchmarkPOET():
-    pass
-# TODO: plot les évolutions de difficultés
-# # TODO: difficulte moyennees sur l'ensemble des environnements
 def mutateEnvironment(listPairs):
     # FIRST : We evaluate each pair, and create a parentList of environments eligible to reproduce,
     # when their agent have a certain score above a threshold
@@ -115,9 +109,19 @@ def mutateEnvironment(listPairs):
     print('new listPairs : ', listPairs)
     return listPairs
 
-def curriculumLearning(targetStairs, targetStump, targetHeight):
+def curriculumLearning():
+    maxIteration = 30 # Giving 30 mutation to the curriculum algorithm
+    pair = PairAgentEnv(difficultySTAIRS = 0, difficultySTUMP = 0, difficultyHEIGHT = 0)
+    for i in range(maxIteration):
+        pair.optimize()
+        pair.saveBrain("brainCURRICULUM_V" + str(VERSION) + "_" + ".txt")
+        pair.addListDifficulty(i)
+        pair.saveLastDifficulty("difficultyLastCURRICULUM_V" + str(VERSION) + "_" + ".txt")
+        score = pair.benchmarkAverage(nbSimulationBenchmark = 5)
+        if score > THRESHOLD_MUTATE:
+            pair.mutate()
+    pair.saveListDifficulty("listDifficultyCURRICULUM_V" + str(VERSION) + ".txt")
 
-    pass
 
 def directLearning(): # 2 hours to run on 12 cores
     nbBenchmark = 20
@@ -164,10 +168,10 @@ def environnementDifficulty(difficultySTAIRS, difficultySTUMP, difficultyHEIGHT)
     return (difficultySTAIRS * 2 + difficultySTUMP * 2 + difficultyHEIGHT) / 5 # (normalized [0, 1], height count less than other)
 
 def main():
-    pair = PairAgentEnv(difficultySTAIRS = 0, difficultySTUMP = 0, difficultyHEIGHT = 0)
-    # pair.loadBrain("brainPOET_V2_2.txt")
+    pair = PairAgentEnv(difficultySTAIRS = 0.5, difficultySTUMP = 0.5, difficultyHEIGHT = 0.5)
+    # pair.loadBrain("brainPOET_V3_0.txt")
     # pair.loadBrain("brainPOET0.txt")
-
+    # pair.loadBrain("brainCURRICULUM_V5_.txt")
     # pair.optimize()
     # pair.benchmarkAverage()
     # pair.benchmark()
@@ -175,7 +179,9 @@ def main():
 
     # plotDifficultyReached()
     plotListDifficulties()
+
     # poetLearning()
+    # curriculumLearning()
     # directLearning()
 
 
