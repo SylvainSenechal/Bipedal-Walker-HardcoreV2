@@ -1,6 +1,8 @@
 # Bipedal-Walker-HardcoreV2
 Trying to solve the hardcore bipedal walker environnement, using [POET](https://arxiv.org/abs/1901.01753) architecture
-
+# Results
+![result1](images/poet1.gif)
+![result2](images/poet2.gif)
 ## Installation
 - install OpenAI [Gym](https://gym.openai.com/) with : `pip install 'gym[all]'`
 - install [Pycma](https://github.com/CMA-ES/pycma)
