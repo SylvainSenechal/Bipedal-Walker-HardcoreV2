@@ -97,8 +97,6 @@ def radar_factory(num_vars, frame='circle'):
 #             [0.6, 0.4, 0.9]])]
 def plotSpider(data, nbAgent):
     N = len(data[0])
-    print(data)
-    print(N)
     theta = radar_factory(N, frame='circle')
 
     spoke_labels = data.pop(0)
@@ -110,14 +108,20 @@ def plotSpider(data, nbAgent):
     ax.set_rgrids([0.2, 0.4, 0.6, 0.8])
     # ax.set_title(title,  position=(0.5, 1.1), ha='center')
 
-    for d in case_data:
-        line = ax.plot(theta, d)
+    for id, d in enumerate(case_data):
+        if id == 0:
+            line = ax.plot(theta, d, color='r', label="POET")
+        elif id == 1:
+            line = ax.plot(theta, d, color='b', label='CURRICULUM')
+        else:
+            line = ax.plot(theta, d, color='b')
         ax.plot(theta, d,  alpha=0.0)
+    ax.legend()
     ax.set_varlabels(spoke_labels)
-    labels = ('POET', 'curriculum 1', 'curriculum 2')
-    legend = ax.legend(labels, loc=(0.9, .95),
-                       labelspacing=0.1, fontsize='small')
-    plt.title('Maximum difficulty solved poet pair n°' + str(nbAgent))
+
+    # legend = ax.legend(labels, loc=(0.9, .95),
+    #                    labelspacing=0.1, fontsize='small')
+    plt.title('Maximum difficulty solved, POET vs CURRICULUM, poet pair n°' + str(nbAgent))
     plt.show()
 
 def plotDifficultyReached():
@@ -153,8 +157,8 @@ def plotListDifficulties():
     iterations, stairs, stumps, heights, SumDifficulties = [], [], [], [], []
     cursor = 0
     sum = 0
-    with open("savedAgent/listDifficulty_V3.txt", "r") as file:
-    # with open("savedAgent/listDifficultyCURRICULUM_V4.txt", "r") as file:
+    with open("savedAgent/listDifficulty_V2.txt", "r") as file:
+    # with open("savedAgent/listDifficultyCURRICULUM_V5.txt", "r") as file:
         for info in file:
             cursor += 1
             if info.strip() == '#':
@@ -183,16 +187,29 @@ def plotListDifficulties():
                 iterations.append(float(info.strip()))
                 cursor = 0
     plt.ylim(0, 1)
+
     for agent in range(len(listIterations)):
+        plt.title('Pairs generated and solved by POET')
+        plt.xlabel('POET iteration')
+        plt.ylabel('STAIRS difficulty solved')
         plt.plot(listIterations[agent], listStairs[agent])
     plt.show()
     for agent in range(len(listIterations)):
+        plt.title('Pairs generated and solved by POET')
+        plt.xlabel('POET iteration')
+        plt.ylabel('STUMPS difficulty solved')
         plt.plot(listIterations[agent], listStumps[agent])
     plt.show()
     for agent in range(len(listIterations)):
+        plt.title('Pairs generated and solved by POET')
+        plt.xlabel('POET iteration')
+        plt.ylabel('HEIGHT difficulty solved')
         plt.plot(listIterations[agent], listHeight[agent])
     plt.show()
     for agent in range(len(listIterations)):
+        plt.title('Pairs generated and solved by POET')
+        plt.xlabel('POET iteration')
+        plt.ylabel('MEAN difficulty solved')
         plt.plot(listIterations[agent], listSumDifficulties[agent])
     plt.show()
 def plotScoresOverDifficulty(scoresSTAIRS, difficultiesSTAIRS, scoresSTUMP, difficultiesSTUMP, scoresHEIGHT, difficultiesHEIGHT):

@@ -21,19 +21,11 @@ HIDDEN_LAYER_SIZE = 20
 BIAS_VERSION = False # Are we using a neural network with bias ?
 
 
-model = {}
 ################ NO BIAS VERSION ################
 if (BIAS_VERSION == False):
-    model['W1'] = np.random.randn(INPUT_SIZE, HIDDEN_LAYER_SIZE) / np.sqrt(INPUT_SIZE)
-    model['W2'] = np.random.randn(HIDDEN_LAYER_SIZE, HIDDEN_LAYER_SIZE) / np.sqrt(HIDDEN_LAYER_SIZE)
-    model['W3'] = np.random.randn(HIDDEN_LAYER_SIZE, OUTPUT_SIZE) / np.sqrt(HIDDEN_LAYER_SIZE)
     SIZE_BRAIN = INPUT_SIZE*HIDDEN_LAYER_SIZE + HIDDEN_LAYER_SIZE*HIDDEN_LAYER_SIZE + HIDDEN_LAYER_SIZE * OUTPUT_SIZE # + HIDDEN_LAYER_SIZE + OUTPUT_SIZE
 ################ BIAS VERSION ################
 else:
-    model['W1'] = np.random.randn(INPUT_SIZE, HIDDEN_LAYER_SIZE) / np.sqrt(INPUT_SIZE)
-    model['W2'] = np.random.randn(HIDDEN_LAYER_SIZE, HIDDEN_LAYER_SIZE) / np.sqrt(HIDDEN_LAYER_SIZE)
-    model['B1'] = np.random.randn(HIDDEN_LAYER_SIZE) / np.sqrt(HIDDEN_LAYER_SIZE)
-    model['B2'] = np.random.randn(OUTPUT_SIZE) / np.sqrt(OUTPUT_SIZE)
     SIZE_BRAIN = INPUT_SIZE*HIDDEN_LAYER_SIZE + HIDDEN_LAYER_SIZE * OUTPUT_SIZE + HIDDEN_LAYER_SIZE + OUTPUT_SIZE
 
 class PairAgentEnv:
